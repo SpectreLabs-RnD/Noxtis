@@ -155,7 +155,7 @@ make clean
 Example:
 
 ```
-sudo ./noxtis_local --listen 40000 --forward 1111 --interface ens3
+./noxtis_local
 ```
 
 ### Remote Mode
@@ -163,7 +163,7 @@ sudo ./noxtis_local --listen 40000 --forward 1111 --interface ens3
 Example:
 
 ```
-sudo ./noxtis_remote --listen 1111 --forward 51820 --interface ens3
+./noxtis_remote
 ```
 
 ---
