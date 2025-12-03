@@ -209,6 +209,7 @@ It is a **pure obfuscator**.
 
 - Optional ChaCha pre-whitening  
 - Optional AES-CTR mode  
+- Addition of randomized Wireguard/UDP packet lengths 
 - MTU auto-detection  
 - XDP / eBPF acceleration  
 - Multi-threaded batch processing  
