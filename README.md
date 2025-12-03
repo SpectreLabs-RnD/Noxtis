@@ -219,10 +219,8 @@ It is a **pure obfuscator**.
 
 ## Contributing
 
-1. Fork repository  
-2. Create branch  
-3. Write changes  
-4. Submit merge request  
+Send us an email on spectrelabs@spectrelabs.io
+
 
 Coding guideline:
 
