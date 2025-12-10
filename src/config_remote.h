@@ -9,7 +9,7 @@
 
 #define BUF_SIZE    2048
 
-#define TARGET_IP   "1.1.1.1"
+#define TARGET_IP   "152.53.46.19"
 
 #define TARGET_PORT 4444
 

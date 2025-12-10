@@ -124,8 +124,20 @@ void start_noxtis_local(int local_fd, int remote_fd) {
 
                     xor_data_fast(buf[i], len);
                     
-                    send(remote_fd, buf[i], len, 0);
-                
+                    ssize_t s = send(remote_fd, buf[i], len, 0);
+
+	            if(s < 0) {
+
+		    	epoll_ctl(ep, EPOLL_CTL_DEL, remote_fd, NULL);
+
+			udp_reconnect(&remote_fd, REMOTE_IP, REMOTE_PORT, 200);
+
+			ep_add(ep, remote_fd);
+
+			continue;
+
+	   	    }
+
                 }
             
             }
@@ -141,8 +153,20 @@ void start_noxtis_local(int local_fd, int remote_fd) {
                 int r = recvmmsg(remote_fd, msgs, BATCH_SIZE, 0, NULL);
                 
                 if(r <= 0) {
-                    
-                    continue;
+
+			if(errno == EAGAIN || errno == EWOULDBLOCK) {
+
+				continue;
+
+			}
+
+			epoll_ctl(ep, EPOLL_CTL_DEL, remote_fd, NULL);
+
+			udp_reconnect(&remote_fd, REMOTE_IP, REMOTE_PORT, 200);
+
+			ep_add(ep, remote_fd);
+
+                    	continue;
 
                 }
 

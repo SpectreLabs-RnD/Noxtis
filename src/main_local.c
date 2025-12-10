@@ -24,8 +24,10 @@ int main() {
     
     }
 
-    int remote = udp_socket_connect(REMOTE_IP, REMOTE_PORT);
-    
+    //int remote = udp_socket_connect(REMOTE_IP, REMOTE_PORT);
+
+    int remote = udp_connect_with_retries(REMOTE_IP, REMOTE_PORT, 10, 200);
+
     if(remote < 0) {
         
         perror("remote connect");

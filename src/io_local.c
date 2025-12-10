@@ -1,9 +1,17 @@
 
+#define _GNU_SOURCE
+
+#define _POSIX_C_SOURCE 199309L
+
 #include "io_local.h"
 
 #include <arpa/inet.h>
 
 #include <fcntl.h>
+
+#include <errno.h>
+
+#include <time.h>
 
 #include <stdio.h>
 
@@ -119,4 +127,66 @@ int ep_add(int ep, int fd) {
 
     return epoll_ctl(ep, EPOLL_CTL_ADD, fd, &ev);
 
+}
+
+int udp_reconnect(int *fd, const char *ip, int port, int retry_delay_ms) {
+
+	if(*fd >= 0) {
+
+		close(*fd);
+
+		*fd = -1;
+
+	}
+
+	while(1) {
+
+		int newfd = udp_socket_connect(ip, port);
+
+		if(newfd >= 0) {
+
+			*fd = newfd;
+
+			return 0;
+
+		}
+
+		struct timespec ts;
+
+		ts.tv_sec  = retry_delay_ms / 1000;
+
+		ts.tv_nsec = (retry_delay_ms % 1000) * 1000000;
+
+		nanosleep(&ts, NULL);
+
+	}
+
+}
+
+int udp_connect_with_retries(const char *ip, int port, int max_attempts, int retry_delay_ms) {
+
+	int fd = -1;
+
+	for(int i = 0; i < max_attempts; i++) {
+
+
+		fd = udp_socket_connect(ip, port);
+
+		if(fd >= 0) {
+
+			return fd;
+
+		}
+
+		struct timespec ts;
+
+		ts.tv_sec  = retry_delay_ms / 1000;
+
+		ts.tv_nsec = (retry_delay_ms % 1000) * 1000000;
+
+		nanosleep(&ts, NULL);
+
+	}
+
+	return -1;
 }

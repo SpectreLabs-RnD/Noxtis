@@ -5,7 +5,7 @@
 
 #define REMOTE_PORT  40000
 
-#define REMOTE_IP    "1.1.1.1"
+#define REMOTE_IP    "152.53.46.19"
 
 #define BUF_SIZE     2048
 
