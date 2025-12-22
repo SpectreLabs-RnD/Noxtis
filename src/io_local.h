@@ -13,6 +13,8 @@ int udp_reconnect(int *fd, const char *ip, int port, int retry_delay_ms);
 
 int udp_connect_with_retries(const char *ip, int port, int max_attempts, int retry_delay_ms);
 
+int udp_socket_disconnect(int fd);
+
 int set_nonblock(int fd);
 
 int set_sockbuf(int fd, int size);
