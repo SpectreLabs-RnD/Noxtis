@@ -1,4 +1,3 @@
-
 #define _GNU_SOURCE
 
 #define _POSIX_C_SOURCE 199309L
@@ -131,21 +130,34 @@ int ep_add(int ep, int fd) {
 
 int udp_reconnect(int *fd, const char *ip, int port, int retry_delay_ms) {
 
-	if(*fd >= 0) {
+	if(*fd < 0) {
 
-		close(*fd);
+		*fd = udp_socket_connect(ip, port);
 
-		*fd = -1;
+		if(*fd >= 0) {
+
+			return 0;
+
+		}
 
 	}
 
+	struct sockaddr_in addr;
+
+	memset(&addr, 0, sizeof(addr));
+
+	addr.sin_family = AF_INET;
+
+	addr.sin_port = htons((uint16_t)port);
+
+	inet_pton(AF_INET, ip, &addr.sin_addr);
+
 	while(1) {
 
-		int newfd = udp_socket_connect(ip, port);
+        	/* Flush pinned tuple before reconnecting */
+        	udp_socket_disconnect(*fd);
 
-		if(newfd >= 0) {
-
-			*fd = newfd;
+        	if(connect(*fd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
 
 			return 0;
 
@@ -162,6 +174,9 @@ int udp_reconnect(int *fd, const char *ip, int port, int retry_delay_ms) {
 	}
 
 }
+
+
+
 
 int udp_connect_with_retries(const char *ip, int port, int max_attempts, int retry_delay_ms) {
 
@@ -189,4 +204,16 @@ int udp_connect_with_retries(const char *ip, int port, int max_attempts, int ret
 	}
 
 	return -1;
+}
+
+int udp_socket_disconnect(int fd) {
+
+	struct sockaddr sa;
+
+	memset(&sa, 0, sizeof(sa));
+
+	sa.sa_family = AF_UNSPEC;
+
+	return connect(fd, &sa, sizeof(sa));
+
 }
