@@ -1,4 +1,3 @@
-
 #define _GNU_SOURCE
 
 #include "config_local.h"
@@ -121,6 +120,26 @@ void start_noxtis_local(int local_fd, int remote_fd) {
                         client_set = 1;
                     
                     }
+
+		    if(!client_set || addr[i].sin_port != client.sin_port || addr[i].sin_addr.s_addr != client.sin_addr.s_addr) {
+
+			udp_socket_disconnect(remote_fd);
+
+			struct sockaddr_in wg_addr = {0};
+
+			wg_addr.sin_family = AF_INET;
+
+			wg_addr.sin_port = htons(REMOTE_PORT);
+
+			inet_pton(AF_INET, REMOTE_IP, &wg_addr.sin_addr);
+
+			connect(remote_fd, (struct sockaddr *)&wg_addr, sizeof(wg_addr));
+
+			memcpy(&client, &addr[i], sizeof(client));
+
+			client_set = 1;
+
+		    }
 
                     xor_data_fast(buf[i], len);
                     
