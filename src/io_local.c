@@ -22,7 +22,7 @@
 
 
 
-int udp_socket_bind(int port) {
+int udp_socket_bind(int port, char *source) {
     
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     
@@ -36,7 +36,7 @@ int udp_socket_bind(int port) {
     
     addr.sin_family = AF_INET;
     
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr.sin_addr.s_addr = inet_addr(source);
     
     addr.sin_port = htons((uint16_t)port);
 

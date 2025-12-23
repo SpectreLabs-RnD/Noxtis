@@ -5,7 +5,7 @@
 
 #include <sys/epoll.h>
 
-int udp_socket_bind(int port);
+int udp_socket_bind(int port, char *source);
 
 int udp_socket_connect(const char *ip, int port);
 
