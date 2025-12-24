@@ -47,7 +47,23 @@ int main(int argc, char *argv[]) {
 
 	for (int i = 1; i < argc; i++) {
 
-		if(strcmp(argv[i], "-lp") == 0) {
+                if(strcmp(argv[i], "-h") == 0) {
+
+                        print_help(argv[0]);
+
+                        return 0;
+
+                }
+
+		else if(strcmp(argv[i], "-lp") == 0) {
+
+			if(i + 1 >= argc || argv[i + 1][0] == '-') {
+
+				printf("-lp requires a port value\n");
+
+				return 1;
+
+			}
 
 			local_port = atoi(argv[++i]);
 
@@ -55,11 +71,28 @@ int main(int argc, char *argv[]) {
 
 		else if (strcmp(argv[i], "-la") == 0) {
 
+                        if(i + 1 >= argc || argv[i + 1][0] == '-') {
+
+                                printf("-la requires an IP address value\n");
+
+                                return 1;
+
+                        }
+
 			local_ip = argv[++i];
+
 
 		}
 
 		else if (strcmp(argv[i], "-ra") == 0) {
+
+                        if(i + 1 >= argc || argv[i + 1][0] == '-') {
+
+                                printf("-ra requires an IP address value\n");
+
+                                return 1;
+
+                        }
 
 			remote_ip = argv[++i];
 
@@ -67,15 +100,15 @@ int main(int argc, char *argv[]) {
 
 		else if (strcmp(argv[i], "-rp") == 0) {
 
+                        if(i + 1 >= argc || argv[i + 1][0] == '-') {
+
+                                printf("-rp requires a port value\n");
+
+                                return 1;
+
+                        }
+
 			remote_port = atoi(argv[++i]);
-
-		}
-
-		else if (strcmp(argv[i], "-h") == 0) {
-
-			print_help(argv[0]);
-
-			return 0;
 
 		}
 
