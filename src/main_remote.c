@@ -5,6 +5,8 @@
 
 #include <unistd.h>
 
+#include <stdlib.h>
+
 #include <arpa/inet.h>
 
 #include <sys/select.h>
@@ -19,14 +21,116 @@
 
 
 
-int main(void) {
+
+void print_help(const char *prog) {
+
+    printf(
+        " Usage: %s [arguments]\n"
+        " \n"
+        " Arguments:\n"
+        " -h			Show this help and exit\n"
+	" -la <local address>	Local IP address\n"
+        " -lp <local port>	Local UDP port\n"
+        " -ra <remote address>	Remote IP address\n"
+        " -rp <remote port>	Remote UDP port\n"
+        "\n",
+        prog
+    );
+
+}
 
 
 
 
+int main(int argc, char *argv[]) {
+
+	char *local_ip = "0.0.0.0";
+
+	int local_port = LISTEN_PORT;
+
+	char *remote_ip = TARGET_IP;
+
+	int remote_port = TARGET_PORT;
+
+	for (int i = 1; i < argc; i++) {
+
+                if(strcmp(argv[i], "-h") == 0) {
+
+                        print_help(argv[0]);
+
+                        return 0;
+
+                }
+
+		else if(strcmp(argv[i], "-lp") == 0) {
+
+			if(i + 1 >= argc || argv[i + 1][0] == '-') {
+
+				printf("-lp requires a port value\n");
+
+				return 1;
+
+			}
+
+			local_port = atoi(argv[++i]);
+
+		}
+
+		else if (strcmp(argv[i], "-la") == 0) {
+
+                        if(i + 1 >= argc || argv[i + 1][0] == '-') {
+
+                                printf("-la requires an IP address value\n");
+
+                                return 1;
+
+                        }
+
+			local_ip = argv[++i];
 
 
-    int listen_sock = create_listen_socket(LISTEN_PORT);
+		}
+
+		else if (strcmp(argv[i], "-ra") == 0) {
+
+                        if(i + 1 >= argc || argv[i + 1][0] == '-') {
+
+                                printf("-ra requires an IP address value\n");
+
+                                return 1;
+
+                        }
+
+			remote_ip = argv[++i];
+
+		}
+
+		else if (strcmp(argv[i], "-rp") == 0) {
+
+                        if(i + 1 >= argc || argv[i + 1][0] == '-') {
+
+                                printf("-rp requires a port value\n");
+
+                                return 1;
+
+                        }
+
+			remote_port = atoi(argv[++i]);
+
+		}
+
+		else {
+
+			fprintf(stderr, "Unknown argument: %s\n", argv[i]);
+
+			return 1;
+
+		}
+
+	}
+
+
+    int listen_sock = create_listen_socket(local_port);
 
     if(listen_sock < 0) {
 
@@ -58,9 +162,9 @@ int main(void) {
 
     upstream_addr.sin_family = AF_INET;
     
-    upstream_addr.sin_port = htons((uint16_t)TARGET_PORT);
+    upstream_addr.sin_port = htons((uint16_t)local_port);
 
-    if(inet_pton(AF_INET, TARGET_IP, &upstream_addr.sin_addr) != 1) {
+    if(inet_pton(AF_INET, remote_ip, &upstream_addr.sin_addr) != 1) {
     
         perror("inet_pton");
     
@@ -78,9 +182,9 @@ int main(void) {
     
     make_nonblocking(upstream_sock);
 
-    printf("[+] Server listening on 0.0.0.0:%d\n", LISTEN_PORT);
+    printf("[+] Server listening on %s:%d\n", local_ip, local_port);
     
-    printf("[+] Forwarding decoded packets to %s:%d\n", TARGET_IP, TARGET_PORT);
+    printf("[+] Forwarding decoded packets to %s:%d\n", remote_ip, remote_port);
 
     while (1) {
 
