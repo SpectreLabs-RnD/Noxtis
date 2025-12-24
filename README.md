@@ -13,6 +13,7 @@ It provides minimal XOR-based obfuscation for WireGuard UDP packets, making them
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Building](#building)
+- [Docker Setup](#docker)
 - [Usage](#usage)
   - [Local Mode](#local-mode)
   - [Remote Mode](#remote-mode)
@@ -147,6 +148,35 @@ make clean
 ```
 
 ---
+
+## Docker
+
+### Build remote Docker image
+
+```
+docker build -f Dockerfile_remote -t noxtis_remote .
+```
+
+### Build localdocker build -f Dockerfile_local -t noxtis_local .
+
+```
+docker build -f Dockerfile_local -t noxtis_local .
+```
+
+### Spawn Noxtis remote container
+
+```
+docker run -dit --net=host --name=noxtis_remote --restart=always noxtis_remote -la (Noxtis local address) -lp (Noxtis local port) -ra (Wireguard address) -rp (Wireguard port)
+```
+
+### Spawn Noxtis local container
+
+```
+docker run -dit --net=host --name=noxtis_local --restart=always noxtis_local -la (local address) -lp (local port) -ra (Noxtis remote address) -rp (Noxtis remote port)
+```
+
+
+
 
 ## Usage
 
