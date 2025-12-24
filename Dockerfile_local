@@ -1,0 +1,26 @@
+
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
+    ca-certificates \
+    iproute2 \
+    iptables \
+    binutils \
+    make \
+    gcc \
+    g++ \
+    libsodium-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt
+
+RUN git clone https://github.com/SpectreLabs-RnD/Noxtis.git
+
+WORKDIR /opt/Noxtis
+
+RUN make local
+
+ENTRYPOINT ["./noxtis_local"]
+
