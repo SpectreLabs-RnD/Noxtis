@@ -175,7 +175,7 @@ docker run -dit --net=host --name=noxtis_remote --restart=always noxtis_remote -
 docker run -dit --net=host --name=noxtis_local --restart=always noxtis_local -la (local address) -lp (local port) -ra (Noxtis remote address) -rp (Noxtis remote port)
 ```
 
-
+Note: Many of docker's arguments can be either omitted or added. Proceed with discretion.
 
 
 ## Usage
