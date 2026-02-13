@@ -243,6 +243,7 @@ It is a **pure obfuscator**.
 - MTU auto-detection  
 - XDP / eBPF acceleration  
 - ~~Multi-threaded batch processing~~
+  
 ~~- Multi-core support~~  
 - Benchmark suite  
 
