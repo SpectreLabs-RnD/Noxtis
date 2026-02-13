@@ -242,7 +242,8 @@ It is a **pure obfuscator**.
 - Addition of randomized Wireguard/UDP packet lengths 
 - MTU auto-detection  
 - XDP / eBPF acceleration  
-- Multi-threaded batch processing  
+- ~~Multi-threaded batch processing~~
+~~- Multi-core support~~  
 - Benchmark suite  
 
 ---
