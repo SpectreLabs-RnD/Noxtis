@@ -1,10 +1,25 @@
+
+#define _GNU_SOURCE
 #include "noxtis_remote.h"
 #include "config_remote.h"
 
 #include <stdio.h>
+#include <sys/socket.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <stdio.h>
+#include <sys/epoll.h>
+
+#include <sys/socket.h>
+
+#include <sys/uio.h>
+
 #include <unistd.h>
+
+
+
 
 int create_listen_socket(int port) {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -13,8 +28,15 @@ int create_listen_socket(int port) {
         return -1;
     }
 
-    int opt = 1;
-    (void)setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+       int opt = 1;
+
+    setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));  //) < 0) {
+
+    //    perror("setsockopt SO_REUSEPORT failed");
+
+      //  exit(0);
+
+    //}
 
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));

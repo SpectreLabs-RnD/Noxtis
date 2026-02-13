@@ -122,6 +122,26 @@ int main(int argc, char *argv[]) {
 
 	}
 
+    printf("[+] UDP %d <-> %s:%d\n", local_port, remote_ip, remote_port);
+
+
+    long int workers = sysconf(_SC_NPROCESSORS_ONLN);
+
+    for (int i = 0; i < workers; i++) {
+        pid_t pid = fork();
+
+        if (pid < 0) {
+            perror("fork failed");
+            exit(0);
+        }
+
+        if (pid == 0) {
+            break;  // child stops forking
+        }
+    }
+
+
+
     int local = udp_socket_bind(local_port, local_ip);
 
     if(local < 0) {
@@ -149,8 +169,6 @@ int main(int argc, char *argv[]) {
     set_nonblock(local);
     
     set_nonblock(remote);
-
-    printf("[+] UDP %d <-> %s:%d\n", local_port, remote_ip, remote_port);
 
     start_noxtis_local(local, remote);
 

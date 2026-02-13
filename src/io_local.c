@@ -14,6 +14,8 @@
 
 #include <stdio.h>
 
+#include <stdlib.h>
+
 #include <string.h>
 
 #include <unistd.h>
@@ -29,6 +31,16 @@ int udp_socket_bind(int port, char *source) {
     if (fd < 0) {
         
         return -1;
+
+    }
+
+    int opt = 1;
+
+    if(setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+
+	perror("setsockopt SO_REUSEPORT failed");
+
+	exit(0);
 
     }
 
@@ -51,6 +63,8 @@ int udp_socket_bind(int port, char *source) {
     return fd;
 
 }
+
+
 
 int udp_socket_connect(const char *ip, int port) {
 
