@@ -131,25 +131,30 @@ int main(int argc, char *argv[]) {
 
 
     printf("[+] Server listening on %s:%d\n", local_ip, local_port);
-    
-    printf("[+] Forwarding decoded packets to %s:%d\n", remote_ip, remote_port);
 
+    printf("[+] Forwarding decoded packets to %s:%d\n", remote_ip, remote_port);
 
     long int workers = sysconf(_SC_NPROCESSORS_ONLN);
 
-    for (int i = 0; i < workers; i++) {
-        pid_t pid = fork();
+    for(int i = 0; i < workers; i++) {
 
-        if (pid < 0) {
-            perror("fork failed");
-            exit(EXIT_FAILURE);
-        }
+	pid_t pid = fork();
 
-        if (pid == 0) {
-            break;  // child stops forking
-        }
+	if(pid < 0) {
+
+		perror("fork failed");
+
+		exit(0);
+
+	}
+
+	if(pid == 0) {
+
+		break;
+
+	}
+
     }
-
 
     int listen_sock = create_listen_socket(local_port);
 

@@ -30,13 +30,13 @@ int create_listen_socket(int port) {
 
        int opt = 1;
 
-    setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));  //) < 0) {
+    if(setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
 
-    //    perror("setsockopt SO_REUSEPORT failed");
+        perror("setsockopt SO_REUSEPORT failed");
 
-      //  exit(0);
+       exit(0);
 
-    //}
+    }
 
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -65,7 +65,7 @@ int create_upstream_socket(const char *ip, int port) {
     memset(&addr, 0, sizeof(addr));
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons((uint16_t)port);    // fixed
+    addr.sin_port = htons((uint16_t)port);
 
     if (inet_pton(AF_INET, ip, &addr.sin_addr) <= 0) {
         perror("inet_pton");
@@ -73,6 +73,5 @@ int create_upstream_socket(const char *ip, int port) {
         return -1;
     }
 
-    // Optional: do NOT connect() if main code uses sendto()
     return sock;
 }
