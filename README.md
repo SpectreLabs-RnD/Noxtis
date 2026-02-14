@@ -157,7 +157,7 @@ make clean
 docker build -f Dockerfile_remote -t noxtis_remote .
 ```
 
-### Build localdocker build -f Dockerfile_local -t noxtis_local .
+### Build local Docker image
 
 ```
 docker build -f Dockerfile_local -t noxtis_local .
