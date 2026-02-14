@@ -238,13 +238,13 @@ It is a **pure obfuscator**.
 ## Roadmap
 
 - Optional ChaCha pre-whitening  
-- Optional AES-CTR mode  
-- Addition of randomized Wireguard/UDP packet lengths 
-- MTU auto-detection  
-- XDP / eBPF acceleration  
-- ~~Multi-threaded batch processing~~
-- ~~Multi-core support~~  
-- Benchmark suite  
+- AES-CTR mode  
+- ~~Addition of randomized Wireguard/UDP packet lengths~~ 
+- ~~MTU auto-detection~~  
+- ~~XDP / eBPF acceleration~~  
+- Multi-threaded batch processing
+- Multi-core support  
+- ~~Benchmark suite~~ 
 
 ---
 
