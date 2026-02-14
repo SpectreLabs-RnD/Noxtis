@@ -57,6 +57,8 @@ This results in packets that **do not match WireGuard’s standard byte pattern*
 
 ## How It Works
 
+### Noxtis has to be setup behind a reverse proxy such as Nginx or Apache for optimal performance.
+
 ### 1. Local → Remote
 - WireGuard packet leaves client
 - Local Noxtis XORs it
