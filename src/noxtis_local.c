@@ -23,6 +23,7 @@
 #include <unistd.h>
 
 
+
 void start_noxtis_local(int local_fd, int remote_fd) {
 
     int ep = epoll_create1(0);
@@ -141,9 +142,13 @@ void start_noxtis_local(int local_fd, int remote_fd) {
 
 		    }
 
-                    xor_data_fast(buf[i], len);
-                    
-                    ssize_t s = send(remote_fd, buf[i], len, 0);
+		    if(noxtis_pad_packet(buf[i], &len) < 0)
+
+		    	continue;
+
+		    }
+
+		    ssize_t s = send(remote_fd, buf[i], len, 0);
 
 	            if(s < 0) {
 
@@ -199,14 +204,19 @@ void start_noxtis_local(int local_fd, int remote_fd) {
 
                     }
 
-                    xor_data_fast(buf[i], len);
+		    if(noxtis_unpad_packet(buf[i], &len) < 0) {
 
-                    if(client_set) {
 
-                        sendto(local_fd, buf[i], len, 0, (struct sockaddr*)&client, client_len);
-                    
-                    }
-                
+		    	continue;
+
+		    }
+
+		    if(client_set) {
+
+		    	sendto(local_fd, buf[i], len, 0, (struct sockaddr*)&client, client_len);
+
+		    }
+ 
                 }
             
             }
