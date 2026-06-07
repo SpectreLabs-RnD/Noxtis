@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
 
     upstream_addr.sin_family = AF_INET;
     
-    upstream_addr.sin_port = htons((uint16_t)local_port);
+    upstream_addr.sin_port = htons((uint16_t)remote_port);
 
     if(inet_pton(AF_INET, remote_ip, &upstream_addr.sin_addr) != 1) {
     
@@ -235,11 +235,15 @@ int main(int argc, char *argv[]) {
 
             if (r > 0) {
 
-                size_t n = (size_t)r;
+		size_t n = (size_t)r;
 
-                xor_data_fast(buffer, n);
+		if(noxtis_unpad_packet(buffer, &n) < 0) {
 
-                (void)sendto(upstream_sock, buffer, n, 0, (struct sockaddr *)&upstream_addr, sizeof(upstream_addr));
+			continue;
+
+		}
+
+		(void)sendto(upstream_sock, buffer, n, 0, (struct sockaddr *)&upstream_addr, sizeof(upstream_addr));
 
             }
 
@@ -251,11 +255,21 @@ int main(int argc, char *argv[]) {
 
             if(r > 0) {
 
-                size_t n = (size_t)r;
+                /*size_t n = (size_t)r;
 
                 xor_data_fast(buffer, n);
 
-                (void)sendto(listen_sock, buffer, n, 0, (struct sockaddr *)&client_addr, client_len);
+                (void)sendto(listen_sock, buffer, n, 0, (struct sockaddr *)&client_addr, client_len);*/
+
+		size_t n = (size_t)r;
+
+		if (noxtis_pad_packet(buffer, &n) < 0) {
+
+			continue;
+
+		}
+
+		(void)sendto(listen_sock, buffer, n, 0, (struct sockaddr *)&client_addr, client_len);
 
             }
 

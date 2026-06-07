@@ -142,7 +142,7 @@ void start_noxtis_local(int local_fd, int remote_fd) {
 
 		    }
 
-		    if(noxtis_pad_packet(buf[i], &len) < 0)
+		    if(noxtis_pad_packet(buf[i], &len) < 0) {
 
 		    	continue;
 
@@ -226,3 +226,4 @@ void start_noxtis_local(int local_fd, int remote_fd) {
     }
 
 }
+
