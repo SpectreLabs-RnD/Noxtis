@@ -62,10 +62,9 @@ static uint64_t get64(const uint8_t *p) {
 
 		v |= ((uint64_t)p[i]) << (i * 8);
 
-		return v;
-
 	}
 
+	return v;
 }
 
 
