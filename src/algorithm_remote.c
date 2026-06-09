@@ -5,106 +5,272 @@
 
 #include <stddef.h>
 
+#include <stdlib.h>
+
 #include <stdio.h>
+
+#include <string.h>
+
 
 #include "algorithm_remote.h"
 
 
-#define PMTU_MAX 1472
+#define OUTSZ 1472
 
-static const uint8_t STATIC_KEY[32] = {
+#define SALT 16
 
-    0xA1, 0x24, 0x93, 0x55, 0x67, 0xAC, 0xDE, 0xF1,
-    0x10, 0x8A, 0xC0, 0x72, 0x66, 0x33, 0xBA, 0x99,
-    0xDE, 0x77, 0x43, 0x22, 0xFE, 0x18, 0x90, 0xAB,
-    0x44, 0x2E, 0x78, 0x50, 0xCA, 0x99, 0x01, 0xCC
+#define HDR 24
 
-};
+#define BODY (OUTSZ - HDR)
 
-static const uint8_t STATIC_NONCE[12] = {
+#define MAXIN (BODY - 2)
 
-    0x01, 0x00, 0x00, 0x00,
-    0x55, 0xAA, 0x55, 0xAA,
-    0x10, 0x20, 0x30, 0x40
 
-};
+static uint8_t root[32];
 
-void xor_data_fast(uint8_t *data, size_t len) {
+static int root_ok;
 
-    crypto_stream_chacha20_xor_ic(data, data, len, STATIC_NONCE, 0, STATIC_KEY);
+static uint8_t tx_salt[16], tx_key[32], tx_npfx[4];
+
+static uint64_t tx_seq, tx_mask;
+
+static int tx_ok;
+
+static uint8_t rx_salt[16], rx_key[32], rx_npfx[4];
+
+static uint64_t rx_mask;
+
+static int rx_ok;
+
+
+static void put64(uint8_t *p, uint64_t v) {
+
+	for(int i = 0; i < 8; i++) {
+
+		p[i] = (uint8_t)(v >> (i * 8));
+
+	}
 
 }
 
-int noxtis_pad_packet(uint8_t *packet, size_t *packet_len) {
 
-	size_t original_len = *packet_len;
+static uint64_t get64(const uint8_t *p) {
 
-	if(!original_len || original_len > 65535 || original_len + 2 > PMTU_MAX) {
+	uint64_t v = 0;
 
-		return -1;
+	for(int i = 0; i < 8; i++) {
 
-	}
+		v |= ((uint64_t)p[i]) << (i * 8);
 
-	size_t available_padding = PMTU_MAX - original_len - 2;
-
-	size_t chosen_padding;
-
-	if(original_len < 1000) {
-
-		size_t high_padding_start = available_padding / 2;
-
-		chosen_padding = high_padding_start + randombytes_uniform((uint32_t)(available_padding - high_padding_start + 1));
+		return v;
 
 	}
 
-	else {
+}
 
-		chosen_padding = randombytes_uniform((uint32_t)(available_padding + 1));
 
-	}
 
-	size_t padded_len = original_len + chosen_padding + 2;
+static int load_key(void) {
 
-	if(chosen_padding) {
+	const char *k;
 
-		randombytes_buf(packet + original_len, chosen_padding);
+	size_t n = 0;
 
-		packet[padded_len - 2] = (uint8_t)original_len;
-
-		packet[padded_len - 1] = (uint8_t)(original_len >> 8);
-
-		xor_data_fast(packet, padded_len);
-
-		*packet_len = padded_len;
+	if(root_ok) {
 
 		return 0;
 
 	}
 
-	return 0;
-}
-
-int noxtis_unpad_packet(uint8_t *packet, size_t *packet_len) {
-
-	size_t received_len = *packet_len;
-
-	if(received_len < 2) {
-
-        	return -1;
-
-	}
-
-	xor_data_fast(packet, received_len);
-
-	size_t original_len = (size_t)packet[received_len - 2] | ((size_t)packet[received_len - 1] << 8);
-
-	if(!original_len || original_len > received_len - 2) {
+	if(sodium_init() < 0) {
 
 		return -1;
 
 	}
 
-	*packet_len = original_len;
+	k = getenv("NOXTIS_KEY");
+
+	if(!k || sodium_base642bin(root, 32, k, strlen(k), NULL, &n, NULL, sodium_base64_VARIANT_ORIGINAL) || n != 32) {
+
+		fprintf(stderr, "Set NOXTIS_KEY with: openssl rand -base64 32\n");
+
+		return -1;
+
+	}
+
+
+	root_ok = 1;
+
+	return 0;
+
+}
+
+
+static void hash32(uint8_t out[32], const char *tag, const uint8_t salt[16]) {
+
+	crypto_generichash_state st;
+
+	crypto_generichash_init(&st, root, 32, 32);
+
+	crypto_generichash_update(&st, (const uint8_t *)tag, strlen(tag));
+
+	crypto_generichash_update(&st, salt, 16);
+
+	crypto_generichash_final(&st, out, 32);
+
+}
+
+static void make_session(const uint8_t salt[16], uint8_t key[32], uint8_t npfx[4], uint64_t *mask) {
+
+	uint8_t tmp[32];
+
+	hash32(key, "key", salt);
+
+	hash32(tmp, "nonce", salt);
+
+	memcpy(npfx, tmp, 4);
+
+	hash32(tmp, "mask", salt);
+
+	*mask = get64(tmp);
+
+}
+
+
+static void make_nonce(uint8_t nonce[12], const uint8_t npfx[4], uint64_t seq) {
+
+	memcpy(nonce, npfx, 4);
+
+	put64(nonce + 4, seq);
+
+}
+
+static int tx_init(void) {
+
+	if(tx_ok) {
+
+		return 0;
+
+	}
+
+	if(load_key()) {
+
+		return -1;
+
+	}
+
+	randombytes_buf(tx_salt, 16);
+
+	make_session(tx_salt, tx_key, tx_npfx, &tx_mask);
+
+	tx_seq = 0;
+
+	tx_ok = 1;
+
+	return 0;
+
+}
+
+void xor_data_fast(uint8_t *data, size_t len) {
+
+	(void)data;
+
+	(void)len;
+
+}
+
+int noxtis_pad_packet(uint8_t *p, size_t *len) {
+
+	uint64_t seq, masked;
+
+	uint8_t nonce[12];
+
+	size_t l;
+
+	if(!p || !len || tx_init()) {
+
+		return -1;
+
+	}
+
+	l = *len;
+
+	if(l == 0 || l > MAXIN) {
+
+		return -1;
+
+	}
+
+	seq = tx_seq++;
+
+	masked = seq ^ tx_mask;
+
+	memmove(p + HDR + 2, p, l);
+
+	memcpy(p, tx_salt, 16);
+
+	put64(p + 16, masked);
+
+	p[HDR] = (uint8_t)l;
+
+	p[HDR + 1] = (uint8_t)(l >> 8);
+
+	memset(p + HDR + 2 + l, 0, BODY - 2 - l);
+
+	make_nonce(nonce, tx_npfx, seq);
+
+	crypto_stream_chacha20_ietf_xor(p + HDR, p + HDR, BODY, nonce, tx_key);
+
+	*len = OUTSZ;
+
+	return 0;
+
+}
+
+int noxtis_unpad_packet(uint8_t *p, size_t *len) {
+
+	uint64_t seq, masked;
+
+	uint8_t nonce[12];
+
+	size_t l;
+
+	if(!p || !len || *len != OUTSZ || load_key()) {
+
+		return -1;
+
+	}
+
+	if(!rx_ok || memcmp(rx_salt, p, 16) != 0) {
+
+		memcpy(rx_salt, p, 16);
+
+		make_session(rx_salt, rx_key, rx_npfx, &rx_mask);
+
+		rx_ok = 1;
+
+	}
+
+
+	masked = get64(p + 16);
+
+	seq = masked ^ rx_mask;
+
+	make_nonce(nonce, rx_npfx, seq);
+
+	crypto_stream_chacha20_ietf_xor(p + HDR, p + HDR, BODY, nonce, rx_key);
+
+	l = (size_t)p[HDR] | ((size_t)p[HDR + 1] << 8);
+
+	if(l == 0 || l > MAXIN) {
+
+		return -1;
+
+	}
+
+	memmove(p, p + HDR + 2, l);
+
+	*len = l;
 
 	return 0;
 
